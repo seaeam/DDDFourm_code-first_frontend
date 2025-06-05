@@ -16,17 +16,15 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './src'),
       },
     },
-    server: isDevelopment
-      ? {
-          proxy: {
-            '/api': {
-              target: env.VITE_API_PORT,
-              changeOrigin: true,
-              rewrite: (path) => path.replace(/^\/api/, ''),
-            },
-          },
-        }
-      : undefined,
+    server: {
+      proxy: {
+        '/api': {
+          target: env.VITE_API_PORT,
+          changeOrigin: true,
+          rewrite: path => path.replace(/^\/api/, ''),
+        },
+      },
+    },
     build: {
       outDir: 'dist',
       sourcemap: isDevelopment,
