@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "https://senior-shayla-seammmm-cc924553.koyeb.app/$1"
     }
   ],
   "env": {
