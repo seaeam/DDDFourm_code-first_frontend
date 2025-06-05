@@ -44,6 +44,7 @@ function Register() {
   const navigate = useNavigate()
 
   const form = useForm<FormSchema>({
+    // @ts-ignore
     resolver: zodResolver(formSchema),
     defaultValues: user || initialValues,
   })

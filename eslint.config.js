@@ -7,6 +7,7 @@ export default antfu({
     'unused-imports/no-unused-vars': 'warn',
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/ban-ts-comment': 'warn',
+    'ts/ban-ts-comment': 'off',
   },
   ignores: ['dist', 'node_modules', '.next', '**/*.d.ts'],
 })

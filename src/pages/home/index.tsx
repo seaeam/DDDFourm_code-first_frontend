@@ -6,10 +6,10 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import PostCard from '../components/Card'
-import ErrorState from '../components/Error'
-import LoadingState from '../components/Loading'
-import EmptyState from '../components/Empty'
+import PostCard from './components/Card'
+import ErrorState from './components/Error'
+import LoadingState from './components/Loading'
+import EmptyState from './components/Empty'
 
 type PostsState =
   | {
