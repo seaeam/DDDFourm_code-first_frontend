@@ -44,7 +44,6 @@ function Register() {
   const navigate = useNavigate()
 
   const form = useForm<FormSchema>({
-    // @ts-expect-error - zodResolver type mismatch with form schema
     resolver: zodResolver(formSchema),
     defaultValues: user || initialValues,
   })
