@@ -1,79 +1,101 @@
-import type { PaymentStatus } from './fake'
-import { Skeleton } from '@/components/ui/skeleton'
+import { getRecentPosts } from '@/api/posts'
+import type { Post } from '@/api/posts/types'
+import { Button } from '@/components/ui/button'
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { useUserStore } from '@/store/userInfo'
-import { invoices } from './fake'
+  RefreshCw
+} from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
+import PostCard from '../components/Card'
+import ErrorState from '../components/Error'
+import LoadingState from '../components/Loading'
+import EmptyState from '../components/Empty'
 
-const StatusToColor: Record<PaymentStatus, string> = {
-  Paid: 'green',
-  Pending: 'yellow',
-  Unpaid: 'red',
+type PostsState =
+  | {
+      status: 'pending'
+    }
+  | {
+      status: 'fulfilled'
+      posts: Post[]
+    }
+  | {
+      status: 'rejected'
+      reason: string
+    }
+
+const initialPostsState: PostsState = {
+  status: 'pending',
 }
 
-function HomePage() {
-  const { isLoggedIn } = useUserStore()
-  return (
-    <div className="container mx-auto py-8 px-4 w-3xl">
-      <div className=" rounded-lg border bg-card shadow-sm p-10">
-        { !isLoggedIn
-          ? (
-              <div className="flex flex-col space-y-3">
-                <Skeleton className="h-[125px] w-[250px] rounded-xl" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-[250px]" />
-                  <Skeleton className="h-4 w-[200px]" />
-                </div>
-              </div>
-            )
-          : (
 
-              <Table>
-                <TableCaption className="text-muted-foreground">A list of your recent invoices.</TableCaption>
-                <TableHeader>
-                  <TableRow className="border-b">
-                    <TableHead className="w-[100px] font-semibold">Invoice</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold">Method</TableHead>
-                    <TableHead className="text-right font-semibold">Amount</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {invoices.map(invoice => (
-                    <TableRow key={invoice.invoice} className="hover:bg-muted/50">
-                      <TableCell className="font-medium">{invoice.invoice}</TableCell>
-                      <TableCell>
-                        <span className={`
-                        inline-flex items-center rounded-full px-2 py-1 text-xs font-medium
-                        bg-${StatusToColor[invoice.paymentStatus]}-100
-                        text-${StatusToColor[invoice.paymentStatus]}-800
-                        `}
-                        >
-                          {invoice.paymentStatus}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{invoice.paymentMethod}</TableCell>
-                      <TableCell className="text-right font-medium">{invoice.totalAmount}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-                <TableFooter className="bg-muted/50">
-                  <TableRow>
-                    <TableCell colSpan={3} className="font-semibold">Total</TableCell>
-                    <TableCell className="text-right font-bold text-lg">$2,500.00</TableCell>
-                  </TableRow>
-                </TableFooter>
-              </Table>
-            ) }
+function HomePage() {
+  const [postsState, setPostsState] = useState(initialPostsState)
+
+  const fetchPosts = async () => {
+    setPostsState({ status: 'pending' })
+
+    const postsRes = await getRecentPosts()
+
+    if (typeof postsRes === 'string') {
+      setPostsState({ status: 'rejected', reason: postsRes })
+      return
+    }
+
+    if (!postsRes.success) {
+      setPostsState({ status: 'rejected', reason: postsRes.error })
+      return
+    }
+
+    setPostsState({ status: 'fulfilled', posts: postsRes.data.posts })
+  }
+
+  useEffect(() => {
+    fetchPosts()
+  }, [])
+
+  // 加载状态
+  if (postsState.status === 'pending') {
+    return <LoadingState />
+  }
+
+  // 错误状态
+  if (postsState.status === 'rejected') {
+    toast.error('帖子加载失败')
+    return <ErrorState reason={postsState.reason} onRetry={fetchPosts} />
+  }
+
+  // 成功状态
+  return (
+    <div className="container mx-auto py-8 px-4 max-w-4xl">
+      {/* 页面头部 */}
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">最新帖子</h1>
+        <p className="text-gray-600">发现社区中的最新讨论和精彩内容</p>
       </div>
+
+      {/* 帖子列表 */}
+      <div className="space-y-6">
+        {postsState.posts.length > 0 ? (
+          postsState.posts.map((post) => <PostCard key={post.id} post={post} />)
+        ) : (
+          <EmptyState />
+        )}
+      </div>
+
+      {/* 底部刷新按钮 */}
+      {postsState.posts.length > 0 && (
+        <div className="text-center mt-8">
+          <Button
+            variant="outline"
+            onClick={fetchPosts}
+            className="hover:shadow-md transition-shadow"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            刷新更多
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

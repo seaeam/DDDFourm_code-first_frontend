@@ -1,3 +1,4 @@
+import type { UserFormData } from '@/api/user/types'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
@@ -16,11 +17,12 @@ import {
 import { Input } from '@/components/ui/input'
 import { useUserStore } from '@/store/userInfo'
 
-const initialValues = {
+const initialValues: UserFormData = {
   username: '',
   email: '',
   firstName: '',
   lastName: '',
+  password: '',
 }
 
 const formSchema = z.object({
@@ -28,21 +30,28 @@ const formSchema = z.object({
   email: z.string().email('无效的邮箱格式'),
   firstName: z.string(),
   lastName: z.string(),
+  password: z
+    .string()
+    .min(8, '密码至少8个字符')
+    .max(20, '密码最多20个字符')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, '密码必须包含大小写字母和数字')
+    .optional(),
 })
+type FormSchema = z.infer<typeof formSchema>
 
 function Register() {
   const { user, isLoggedIn, loading } = useUserStore()
   const navigate = useNavigate()
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormSchema>({
     // @ts-expect-error - zodResolver type mismatch with form schema
     resolver: zodResolver(formSchema),
     defaultValues: user || initialValues,
   })
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: FormSchema) {
     if (isLoggedIn && user) {
-      await updateUser(user.ID, values)
+      await updateUser(user.id, values)
     }
     else {
       await register(values)
@@ -66,13 +75,18 @@ function Register() {
               </div>
 
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-6"
+                >
                   <FormField
                     control={form.control}
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-700">用户名</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">
+                          用户名
+                        </FormLabel>
                         <FormControl>
                           <Input
                             placeholder="请输入用户名"
@@ -93,7 +107,9 @@ function Register() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-700">邮箱</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">
+                          邮箱
+                        </FormLabel>
                         <FormControl>
                           <Input
                             placeholder="请输入邮箱"
@@ -113,7 +129,9 @@ function Register() {
                       name="firstName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-gray-700">名字</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-700">
+                            名字
+                          </FormLabel>
                           <FormControl>
                             <Input
                               placeholder="请输入名字"
@@ -131,7 +149,9 @@ function Register() {
                       name="lastName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-gray-700">姓氏</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-700">
+                            姓氏
+                          </FormLabel>
                           <FormControl>
                             <Input
                               placeholder="请输入姓氏"
@@ -145,13 +165,38 @@ function Register() {
                     />
                   </div>
 
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">
+                          密码
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="请输入密码"
+                            type="password"
+                            className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <div className="pt-4">
                     <Button
                       disabled={loading}
                       type="submit"
                       className="w-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 font-medium rounded-lg text-sm px-5 py-3 transition-all duration-200 transform hover:scale-[1.02]"
                     >
-                      {loading ? '处理中...' : (isLoggedIn ? '保存修改' : '立即注册')}
+                      {loading
+                        ? '处理中...'
+                        : isLoggedIn
+                          ? '保存修改'
+                          : '立即注册'}
                     </Button>
                   </div>
                 </form>

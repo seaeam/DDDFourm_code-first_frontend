@@ -1,13 +1,6 @@
+import type { UserInfo } from '@/api/user/types'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-
-interface UserInfo {
-  ID: string
-  username: string
-  email: string
-  firstName: string
-  lastName: string
-}
 
 interface UserStore {
   user: UserInfo | null
@@ -21,6 +14,7 @@ interface UserStore {
 
 // 创建 Zustand store
 export const useUserStore = create<UserStore>()(
+  // 持久化存储
   persist(
     (set, get) => ({
       user: null,
@@ -62,10 +56,11 @@ export const useUserStore = create<UserStore>()(
     {
       name: 'user-storage', // localStorage 中的 key
       storage: createJSONStorage(() => localStorage), // 使用 localStorage
+      // 只持久化部分状态
       partialize: state => ({
         user: state.user,
         isLoggedIn: state.isLoggedIn,
-      }), // 只持久化部分状态
+      }),
     },
   ),
 )

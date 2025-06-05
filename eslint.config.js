@@ -8,10 +8,5 @@ export default antfu({
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/ban-ts-comment': 'warn',
   },
-  ignores: [
-    'dist',
-    'node_modules',
-    '.next',
-    '**/*.d.ts',
-  ],
+  ignores: ['dist', 'node_modules', '.next', '**/*.d.ts'],
 })

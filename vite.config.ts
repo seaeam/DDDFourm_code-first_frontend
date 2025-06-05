@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '/api': {
-          target: env.VITE_TARGET,
+          target: env.VITE_API_PORT,
           changeOrigin: true,
           rewrite: path => path.replace(/^\/api/, ''),
         },

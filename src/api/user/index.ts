@@ -1,32 +1,13 @@
+import type {
+  GetUserResponse,
+  RegisterResponse,
+  UpdateUserResponse,
+  UserInfo,
+} from './types'
 import axios from 'axios'
 import { toast } from 'sonner'
 import { useUserStore } from '@/store/userInfo'
-import instance from './instance'
-
-interface UserInfo {
-  ID: string
-  username: string
-  email: string
-  firstName: string
-  lastName: string
-}
-
-// 定义 API 响应类型
-interface GetUserResponse {
-  data: UserInfo
-  success: boolean
-}
-
-interface RegisterResponse {
-  data: UserInfo
-  success: boolean
-  token?: string
-}
-
-interface UpdateUserResponse {
-  data: UserInfo
-  success: boolean
-}
+import instance from '../instance'
 
 // 获取用户信息
 export async function getUserByEmail(email: string) {
@@ -49,7 +30,7 @@ export async function getUserByEmail(email: string) {
   }
 }
 
-export async function register(userInfo: Omit<UserInfo, 'ID'>) {
+export async function register(userInfo: Omit<UserInfo, 'id'>) {
   const { setUser, setLoading } = useUserStore.getState()
   try {
     setLoading(true)
@@ -80,11 +61,22 @@ export async function updateUser(userId: string, userInfo: Partial<UserInfo>) {
   try {
     setLoading(true)
 
-    const response = await instance.post<UpdateUserResponse>(`/users/edit/?userId=${userId}`, userInfo)
-    toast.success('更新成功')
-    setUser(response.data.data)
+    const response = await instance.post<UpdateUserResponse>(
+      `/users/edit/?userId=${userId}`,
+      userInfo,
+    )
 
-    return response.data
+    const state = response.data
+
+    if (state.success) {
+      toast.success('更新成功')
+      setUser(state.data)
+    }
+    else {
+      toast.error(state.error)
+    }
+
+    return state
   }
   catch (error) {
     if (axios.isAxiosError(error)) {
