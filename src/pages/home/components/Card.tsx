@@ -1,10 +1,4 @@
 import type { Post } from '@/api/posts/types'
-import { Marquee } from '@/components/magicui/marquee'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Calendar,
   ChevronDown,
@@ -16,17 +10,33 @@ import {
   ThumbsUp,
   User,
 } from 'lucide-react'
-import { useMemo, useRef, useState } from 'react'
-import COMMENT_SUGGESTIONS from '../data/comments'
+import { useRef, useState } from 'react'
+import { Marquee } from '@/components/magicui/marquee'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
+import { Textarea } from '@/components/ui/textarea'
+import useRandomComments from '@/hooks/useRandomComments'
+
+interface CommentState {
+  showComments: boolean
+  newComment: string
+  isSubmitting: boolean
+  showSuggestions: boolean
+}
 
 function PostCard({ post }: { post: Post }) {
-  const [showComments, setShowComments] = useState(false)
-  const [newComment, setNewComment] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showSuggestions, setShowSuggestions] = useState(true)
+  const [commentState, setCommentState] = useState<CommentState>({
+    showComments: false,
+    newComment: '',
+    isSubmitting: false,
+    showSuggestions: true,
+  })
 
-  // 添加 ref 来引用输入框
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const commentSuggestions = useRandomComments()
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('zh-CN', {
@@ -39,20 +49,11 @@ function PostCard({ post }: { post: Post }) {
   }
 
   const toggleComments = () => {
-    setShowComments(!showComments)
+    setCommentState(prev => ({ ...prev, showComments: !prev.showComments }))
   }
 
-  // 使用 useMemo 确保建议只生成一次
-  const commentSuggestions = useMemo(() => {
-    const shuffled = [...COMMENT_SUGGESTIONS].sort(() => 0.5 - Math.random())
-    const count = Math.floor(Math.random() * 10) + 15 // 10-15个建议
-    return shuffled.slice(0, count)
-  }, [post.id]) // 依赖于 post.id，每个帖子有不同的建议
-
-  // 点击评论建议，填入评论框并聚焦
   const handleSuggestionClick = (suggestion: string) => {
-    setNewComment(suggestion)
-    // 聚焦到输入框
+    setCommentState(prev => ({ ...prev, newComment: suggestion }))
     setTimeout(() => {
       textareaRef.current?.focus()
     }, 100)
@@ -60,30 +61,39 @@ function PostCard({ post }: { post: Post }) {
 
   const commentsCount = post.comments?.length || 0
 
-  // TODO 发送评论
   const handleAddComment = async () => {
-    if (!newComment.trim()) return
+    if (!commentState.newComment.trim())
+      return
 
-    setIsSubmitting(true)
+    setCommentState(prev => ({ ...prev, isSubmitting: true }))
     try {
       // 这里调用你的添加评论 API
-      // await addComment(post.id, newComment)
-      console.log('添加评论:', newComment)
-      setNewComment('')
+      // await addComment(post.id, commentState.newComment)
+      setCommentState(prev => ({ ...prev, newComment: '', isSubmitting: false }))
       // 重新获取帖子数据或更新本地状态
-    } catch (error) {
+    }
+    catch (error) {
       console.error('添加评论失败:', error)
-    } finally {
-      setIsSubmitting(false)
+      setCommentState(prev => ({ ...prev, isSubmitting: false }))
     }
   }
 
+  const postUser = post.memberPostedBy.user
   return (
     <Card className="hover:shadow-md transition-shadow duration-200">
       <CardHeader>
         <div className="flex items-center space-x-3 mb-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-            <User className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 border border-gray-300 rounded-full flex items-center justify-center">
+            {postUser.avatar
+              ? (
+                  <Avatar>
+                    <AvatarImage src={postUser.avatar} />
+                    <AvatarFallback>{postUser.username.slice(0, 2)}</AvatarFallback>
+                  </Avatar>
+                )
+              : (
+                  <User className="w-5 h-5 text-black" />
+                )}
           </div>
           <div className="flex-1">
             <p className="font-medium text-sm text-gray-900">
@@ -108,21 +118,18 @@ function PostCard({ post }: { post: Post }) {
           <div className="flex items-center space-x-1 hover:text-blue-600 cursor-pointer transition-colors">
             <ThumbsUp className="w-4 h-4" />
             <span>
-              {post.votes?.filter((vote) => vote.voteType === 'Upvote')
-                .length || 0}
+              {post.votes?.filter(vote => vote.voteType === 'Upvote').length || 0}
               赞
             </span>
           </div>
           <div className="flex items-center space-x-1 hover:text-red-600 cursor-pointer transition-colors">
             <ThumbsDown className="w-4 h-4" />
             <span>
-              {post.votes?.filter((vote) => vote.voteType === 'Downvote')
-                .length || 0}
+              {post.votes?.filter(vote => vote.voteType === 'Downvote').length || 0}
               踩
             </span>
           </div>
 
-          {/* 可点击的评论按钮 */}
           <Button
             variant="ghost"
             size="sm"
@@ -130,41 +137,42 @@ function PostCard({ post }: { post: Post }) {
             className="flex items-center space-x-1 hover:text-green-600 transition-colors h-auto p-1"
           >
             <MessageSquare className="w-4 h-4" />
-            <span>{commentsCount} 评论</span>
-            {showComments ? (
-              <ChevronUp className="w-3 h-3 ml-1" />
-            ) : (
-              <ChevronDown className="w-3 h-3 ml-1" />
-            )}
+            <span>
+              {commentsCount}
+              {' '}
+              评论
+            </span>
+            {commentState.showComments
+              ? (
+                  <ChevronUp className="w-3 h-3 ml-1" />
+                )
+              : (
+                  <ChevronDown className="w-3 h-3 ml-1" />
+                )}
           </Button>
         </div>
 
-        {/* 评论区域 */}
-        {showComments && (
+        {commentState.showComments && (
           <>
             <Separator className="my-4" />
 
-            {/* 现有评论列表 */}
             {commentsCount > 0 && (
               <div className="space-y-3 mb-4">
                 <h4 className="font-medium text-sm text-gray-900 mb-3">
-                  评论 ({commentsCount})
+                  评论 (
+                  {commentsCount}
+                  )
                 </h4>
                 {post.comments?.map((comment, index) => (
-                  <div
-                    key={comment.id || index}
-                    className="bg-gray-50 rounded-lg p-3"
-                  >
+                  <div key={comment.id || index} className="bg-gray-50 rounded-lg p-3">
                     <div className="flex items-center space-x-2 mb-2">
                       <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center">
                         <User className="w-3 h-3 text-white" />
                       </div>
-                      <span className="text-xs font-medium text-gray-700">
-                        {/* TODO 应该显示姓名而不是 id */}
+                      <span className=" font-medium text-xs text-gray-700">
                         {comment.id || '匿名用户'}
                       </span>
                       <span className="text-xs text-gray-500">
-                        {/* TODO 还没有给时间 */}
                         {formatDate(new Date().toISOString())}
                       </span>
                     </div>
@@ -174,38 +182,41 @@ function PostCard({ post }: { post: Post }) {
               </div>
             )}
 
-            {/* 快速回复建议 - 始终显示 */}
             <div className="mb-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-2">
                   <Sparkles className="w-4 h-4 text-amber-500" />
                   <p className="text-sm text-gray-600 font-medium">
-                    {commentsCount > 0
-                      ? '快速回复：'
-                      : '还没有评论，试试这些快速回复：'}
+                    {commentsCount > 0 ? '快速回复：' : '还没有评论，试试这些快速回复：'}
                   </p>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setShowSuggestions(!showSuggestions)}
+                  onClick={() =>
+                    setCommentState(prev => ({
+                      ...prev,
+                      showSuggestions: !prev.showSuggestions,
+                    }))}
                   className="text-xs h-auto p-1"
                 >
-                  {showSuggestions ? (
-                    <>
-                      <ChevronUp className="w-3 h-3 mr-1" />
-                      收起
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="w-3 h-3 mr-1" />
-                      展开
-                    </>
-                  )}
+                  {commentState.showSuggestions
+                    ? (
+                        <>
+                          <ChevronUp className="w-3 h-3 mr-1" />
+                          收起
+                        </>
+                      )
+                    : (
+                        <>
+                          <ChevronDown className="w-3 h-3 mr-1" />
+                          展开
+                        </>
+                      )}
                 </Button>
               </div>
 
-              {showSuggestions && (
+              {commentState.showSuggestions && (
                 <div className="relative">
                   <Marquee pauseOnHover className="[--duration:100s]">
                     <div className="flex gap-2">
@@ -228,7 +239,6 @@ function PostCard({ post }: { post: Post }) {
               )}
             </div>
 
-            {/* 评论输入框 */}
             <div className="space-y-3">
               <div className="flex space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
@@ -237,8 +247,9 @@ function PostCard({ post }: { post: Post }) {
                 <div className="flex-1 space-y-2">
                   <Textarea
                     ref={textareaRef}
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
+                    value={commentState.newComment}
+                    onChange={e =>
+                      setCommentState(prev => ({ ...prev, newComment: e.target.value }))}
                     placeholder="写下你的评论..."
                     className="min-h-[80px] resize-none"
                   />
@@ -248,11 +259,13 @@ function PostCard({ post }: { post: Post }) {
                     </p>
                     <Button
                       onClick={handleAddComment}
-                      disabled={!newComment.trim() || isSubmitting}
+                      disabled={
+                        !commentState.newComment.trim() || commentState.isSubmitting
+                      }
                       size="sm"
                     >
                       <Send className="w-4 h-4 mr-1" />
-                      {isSubmitting ? '发送中...' : '发送'}
+                      {commentState.isSubmitting ? '发送中...' : '发送'}
                     </Button>
                   </div>
                 </div>

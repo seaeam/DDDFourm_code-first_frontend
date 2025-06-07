@@ -1,6 +1,7 @@
 import type {
   GetUserResponse,
   RegisterResponse,
+  UpdateUserAvatarResponse,
   UpdateUserResponse,
   UserInfo,
 } from './types'
@@ -23,14 +24,13 @@ export async function getUserByEmail(email: string) {
       },
     })
     return response.data
-  }
-  catch (error) {
+  } catch (error) {
     toast.error('获取用户信息失败')
     throw error
   }
 }
 
-export async function register(userInfo: Omit<UserInfo, 'id'>) {
+export async function register(userInfo: Omit<UserInfo, 'id' | 'avatar'>) {
   const { setUser, setLoading } = useUserStore.getState()
   try {
     setLoading(true)
@@ -42,15 +42,13 @@ export async function register(userInfo: Omit<UserInfo, 'id'>) {
     toast.success('注册成功')
 
     return response.data
-  }
-  catch (error) {
+  } catch (error) {
     if (axios.isAxiosError(error)) {
       const errorMessage = error.response?.data?.error || '注册失败'
       toast.error(errorMessage)
     }
     throw error
-  }
-  finally {
+  } finally {
     setLoading(false)
   }
 }
@@ -63,7 +61,7 @@ export async function updateUser(userId: string, userInfo: Partial<UserInfo>) {
 
     const response = await instance.post<UpdateUserResponse>(
       `/users/edit/?userId=${userId}`,
-      userInfo,
+      userInfo
     )
 
     const state = response.data
@@ -71,26 +69,65 @@ export async function updateUser(userId: string, userInfo: Partial<UserInfo>) {
     if (state.success) {
       toast.success('更新成功')
       setUser(state.data)
-    }
-    else {
+    } else {
       toast.error(state.error)
     }
 
     return state
-  }
-  catch (error) {
+  } catch (error) {
     if (axios.isAxiosError(error)) {
       const errorMessage = error.response?.data?.error || '更新失败'
       toast.error(errorMessage)
-    }
-    else if (error instanceof Error) {
+    } else if (error instanceof Error) {
       toast.error(error.message)
-    }
-    else {
+    } else {
       toast.error('更新失败')
     }
+  } finally {
+    setLoading(false)
   }
-  finally {
+}
+
+export async function updateUserAvatar(userId: string, file: File) {
+  const { updateUser, setLoading } = useUserStore.getState()
+
+  if (!userId || !file) {
+    return
+  }
+
+  try {
+    setLoading(true)
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const response = await instance.post<UpdateUserAvatarResponse>(
+      `/avatar?userId=${userId}`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    )
+    const state = response.data
+
+    if (!state.success) throw state.error
+
+    updateUser({ avatar: state.data })
+
+    toast.success('更新成功')
+    return state.data
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorMessage = error.response?.data?.error || '头像更新失败'
+      toast.error(errorMessage)
+    } else if (error instanceof Error) {
+      toast.error(error.message)
+    } else {
+      toast.error('头像更新失败')
+    }
+  } finally {
     setLoading(false)
   }
 }

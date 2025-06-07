@@ -10,7 +10,7 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <Header />
       {element}
-      <Toaster richColors position="top-right" closeButton />
+      <Toaster richColors position="top-right" />
     </div>
   )
 }

@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2 } from 'lucide-react'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 
 function LoadingState() {
   return (
@@ -12,7 +12,7 @@ function LoadingState() {
         </div>
 
         {/* 帖子列表骨架 */}
-        {[...Array(3)].map((_, i) => (
+        {[...Array.from({ length: 3 })].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader>
               <div className="flex items-center space-x-4">

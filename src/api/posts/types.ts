@@ -45,6 +45,7 @@ export interface User {
   lastName: string
   password: string
   username: string
+  avatar: null | string
 }
 
 export interface Vote {

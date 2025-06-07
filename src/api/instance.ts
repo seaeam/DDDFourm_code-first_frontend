@@ -3,7 +3,7 @@ import axios from 'axios'
 const isDevelopment = import.meta.env.MODE === 'development'
 const isProduction = import.meta.env.MODE === 'production'
 
-const getApiConfig = () => {
+function getApiConfig() {
   if (isDevelopment) {
     return {
       baseURL: '/api', // 开发环境使用代理
@@ -42,7 +42,7 @@ instance.interceptors.request.use(
   (error) => {
     console.error('❌ Request Error:', error)
     return Promise.reject(error)
-  }
+  },
 )
 
 instance.interceptors.response.use(
@@ -73,14 +73,16 @@ instance.interceptors.response.use(
         default:
           console.error(`❌ ${status}: ${data.message || '请求失败'}`)
       }
-    } else if (error.request) {
+    }
+    else if (error.request) {
       console.error('❌ 网络错误，请检查网络连接')
-    } else {
+    }
+    else {
       console.error('❌ 请求配置错误:', error.message)
     }
 
     return Promise.reject(error)
-  }
+  },
 )
 
 export default instance

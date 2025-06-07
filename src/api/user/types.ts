@@ -4,15 +4,18 @@ export interface UserInfo {
   email: string
   firstName: string
   lastName: string
+  avatar: string | null
 }
 
-export type GetUserResponse = {
-  data: UserInfo | undefined
-  success: true
-} | {
-  error: string
-  success: false
-}
+export type GetUserResponse =
+  | {
+      data: UserInfo | undefined
+      success: true
+    }
+  | {
+      error: string
+      success: false
+    }
 
 export interface RegisterResponse {
   data: UserInfo
@@ -21,13 +24,23 @@ export interface RegisterResponse {
 
 export type UpdateUserResponse =
   | {
-    data: UserInfo
-    success: true
-  }
+      data: UserInfo
+      success: true
+    }
   | {
-    error: string
-    success: false
-  }
+      error: string
+      success: false
+    }
+
+export type UpdateUserAvatarResponse =
+  | {
+      data: string
+      success: true
+    }
+  | {
+      error: string
+      success: false
+    }
 
 export interface UserFormData {
   username: string
@@ -35,6 +48,7 @@ export interface UserFormData {
   firstName: string
   lastName: string
   password: string
+  avatar: string | undefined
 }
 
 export interface UserUpdateData {

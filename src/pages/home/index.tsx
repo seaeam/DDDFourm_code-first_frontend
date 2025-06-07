@@ -1,33 +1,32 @@
-import { getRecentPosts } from '@/api/posts'
 import type { Post } from '@/api/posts/types'
-import { Button } from '@/components/ui/button'
 import {
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { getRecentPosts } from '@/api/posts'
+import { Button } from '@/components/ui/button'
 import PostCard from './components/Card'
+import EmptyState from './components/Empty'
 import ErrorState from './components/Error'
 import LoadingState from './components/Loading'
-import EmptyState from './components/Empty'
 
 type PostsState =
   | {
-      status: 'pending'
-    }
+    status: 'pending'
+  }
   | {
-      status: 'fulfilled'
-      posts: Post[]
-    }
+    status: 'fulfilled'
+    posts: Post[]
+  }
   | {
-      status: 'rejected'
-      reason: string
-    }
+    status: 'rejected'
+    reason: string
+  }
 
 const initialPostsState: PostsState = {
   status: 'pending',
 }
-
 
 function HomePage() {
   const [postsState, setPostsState] = useState(initialPostsState)
@@ -76,11 +75,13 @@ function HomePage() {
 
       {/* 帖子列表 */}
       <div className="space-y-6">
-        {postsState.posts.length > 0 ? (
-          postsState.posts.map((post) => <PostCard key={post.id} post={post} />)
-        ) : (
-          <EmptyState />
-        )}
+        {postsState.posts.length > 0
+          ? (
+              postsState.posts.map(post => <PostCard key={post.id} post={post} />)
+            )
+          : (
+              <EmptyState />
+            )}
       </div>
 
       {/* 底部刷新按钮 */}

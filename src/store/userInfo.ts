@@ -8,7 +8,7 @@ interface UserStore {
   loading: boolean
   setUser: (user: UserInfo) => void
   clearUser: () => void
-  updateUser: (updates: UserInfo) => void
+  updateUser: (updates: Partial<UserInfo>) => void
   setLoading: (loading: boolean) => void
 }
 
@@ -42,6 +42,9 @@ export const useUserStore = create<UserStore>()(
       // 更新用户信息
       updateUser: (updates) => {
         const currentUser = get().user
+
+        if (currentUser === null)
+          return
 
         set({
           user: { ...currentUser, ...updates },
